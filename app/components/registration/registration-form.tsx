@@ -13,11 +13,10 @@ import {
 import { useState } from "react";
 import { CustomerType } from "./customer-type";
 import { StepIndicator } from "./step-indicator";
-import { DocumentUpload } from "./steps/document-upload";
+import { DocumentNumber } from "./steps/document-number";
 import { PersonalInfo } from "./steps/personal-info";
-
-type CustomerType = "georgian" | "foreigner" | "legal";
-type Step = "type" | "personal" | "documents" | "company" | "agreement";
+import { Agreement } from "./steps/agreement";
+import { PasswordForm } from "./steps/password-form";
 
 interface RegistrationFormProps {
   open: boolean;
@@ -32,24 +31,23 @@ export function RegistrationForm({
   const [currentStep, setCurrentStep] = useState<FormSteps>(FormSteps?.TYPE);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<Partial<RegistrationData>>({});
-  const steps = [FormSteps?.TYPE, FormSteps?.PERSONAL, FormSteps?.DOCUMENTS, FormSteps?.AGREEMENT, FormSteps?.PASSWORD];
+  const steps = [
+    FormSteps?.TYPE,
+    FormSteps?.PERSONAL,
+    FormSteps?.DOCUMENTS,
+    FormSteps?.AGREEMENT,
+    FormSteps?.PASSWORD,
+  ];
 
-  const getTotalSteps = (type: CustomerRole) => {
-    switch (type) {
-      case CustomerRole.LOCAL:
-      case CustomerRole?.FOREIGNER:
-        return 3; // personal, documents, agreement
-      case CustomerRole?.LEGAL_PERSON:
-        return 4; // personal, documents, company, agreement
-      default:
-        return 0;
-    }
-  };
-
-  const getCurrentStepIndex = () => {
-    if (!customerType) return 0;
+  const getTotalSteps = (type: CustomerRole): number => 5;
+  const getCurrentStepIndex = (): number => {
     return steps.indexOf(currentStep);
   };
+
+  // const getCurrentStepIndex = () => {
+  //   if (!customerType) return 0;
+  //   return steps.indexOf(currentStep);
+  // };
 
   const getCustomerRole = (type: CustomerRole): CustomerRole => {
     switch (type) {
@@ -69,43 +67,131 @@ export function RegistrationForm({
     setCurrentStep(FormSteps?.PERSONAL);
   };
 
-  const validatePersonalInfo = (): boolean => {
-    console.log(!formData.first_name?.trim());
-    if (!formData.first_name?.trim()) {
+// Example validation functions:
+
+const validatePersonalInfo = (): boolean => {
+  if (!formData.first_name?.trim()) {
+    toast({
+      variant: "destructive",
+      title: "Validation Error",
+      description: "First name is required.",
+    });
+    return false;
+  }
+  if (!formData.last_name?.trim()) {
+    toast({
+      variant: "destructive",
+      title: "Validation Error",
+      description: "Last name is required.",
+    });
+    return false;
+  }
+  if (!formData.email?.trim()) {
+    toast({
+      variant: "destructive",
+      title: "Validation Error",
+      description: "Email is required.",
+    });
+    return false;
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(formData.email)) {
+    toast({
+      variant: "destructive",
+      title: "Validation Error",
+      description: "Invalid email format.",
+    });
+    return false;
+  }
+  // Validate email length (example: at least 5 and at most 254 characters)
+  if (formData.email.length < 5 || formData.email.length > 254) {
+    toast({
+      variant: "destructive",
+      title: "Validation Error",
+      description: "Email length is invalid.",
+    });
+    return false;
+  }
+  // Validate mobile presence
+  if (!formData.mobile?.trim()) {
+    toast({
+      variant: "destructive",
+      title: "Validation Error",
+      description: "Phone number is required.",
+    });
+    return false;
+  }
+  // Validate mobile format: only digits allowed, e.g. between 7 and 15 digits
+  const mobileRegex = /^[0-9]{7,15}$/;
+  if (!mobileRegex.test(formData.mobile)) {
+    toast({
+      variant: "destructive",
+      title: "Validation Error",
+      description:
+        "Invalid mobile number format.",
+    });
+    return false;
+  }
+  return true;
+};
+
+const validateDocument = (): boolean => {
+  // Check document is provided
+  if (!formData.document?.trim()) {
+    toast({
+      variant: "destructive",
+      title: "Document Number Required",
+      description: "Document number is required to proceed.",
+    });
+    return false;
+  }
+  // Validate document: only alphanumeric characters allowed
+  const docRegex = /^[a-zA-Z0-9]+$/;
+  if (!docRegex.test(formData.document)) {
+    toast({
+      variant: "destructive",
+      title: "Validation Error",
+      description: "Document number must be alphanumeric.",
+    });
+    return false;
+  }
+  // Validate document length (example: between 5 and 20 characters)
+  if (formData.document.length < 5 || formData.document.length > 20) {
+    toast({
+      variant: "destructive",
+      title: "Validation Error",
+      description: "Document number must be between 5 and 20 characters.",
+    });
+    return false;
+  }
+  return true;
+};
+
+
+  const validateAfterAgreement = async (): Promise<boolean> => {
+    console.log(formData);
+    if (!formData.terms || !formData.marketing || !formData.dataProcessing) {
       toast({
         variant: "destructive",
-        title: "Validation Error",
-        description: "First name is required.",
+        title: "Agreement Required",
+        description: `You must agree to the ${
+          !formData?.terms
+            ? " terms and conditions"
+            : !formData?.marketing
+            ? "marketing communications"
+            : !formData?.dataProcessing
+            ? "consent to the processing of my personal data"
+            : ""
+        } to proceed.`,
       });
       return false;
     }
-    if (!formData.last_name?.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Validation Error",
-        description: "Last name is required.",
-      });
-      return false;
-    }
-    if (!formData.mobile?.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Validation Error",
-        description: "Phone number is required.",
-      });
-      return false;
-    }
+    const validate = await validateStep();
+    console.log(validate);
     return true;
   };
 
   const handleBack = () => {
-    // const steps: Step[] = [
-    //   "type",
-    //   "personal",
-    //   "documents",
-    //   "company",
-    //   "agreement",
-    // ];
     const currentIndex = steps.indexOf(currentStep);
 
     if (currentIndex <= 0) {
@@ -117,7 +203,8 @@ export function RegistrationForm({
   };
 
   const validateStep = async (): Promise<boolean> => {
-    if (currentStep === FormSteps?.PERSONAL) {
+    // Check if the user agreed to terms (assuming the Agreement component sets formData.terms to true)
+    if (currentStep === FormSteps?.AGREEMENT) {
       try {
         setIsLoading(true);
         const validationData: RegistrationValidateData = {
@@ -160,28 +247,46 @@ export function RegistrationForm({
     if (currentStep === FormSteps?.PERSONAL && !validatePersonalInfo()) {
       return;
     }
+    if (currentStep === FormSteps?.DOCUMENTS && !validateDocument()) {
+      return;
+    }
+    if (currentStep === FormSteps.AGREEMENT) {
+      const valid = await validateAfterAgreement();
+      console.log(valid);
+      if (!valid) return;
+    }
+    // Proceed to next step
+    const steps: FormSteps[] = [
+      FormSteps.TYPE,
+      FormSteps.PERSONAL,
+      FormSteps.DOCUMENTS,
+      FormSteps.AGREEMENT,
+      FormSteps.PASSWORD,
+    ];
     const currentIndex = steps.indexOf(currentStep);
 
     if (currentIndex < steps.length - 1) {
-      // Skip company step for non-legal persons
-      if (customerType !== CustomerRole?.LEGAL_PERSON && steps[currentIndex + 1] === FormSteps?.AGREEMENT) {
-        setCurrentStep(FormSteps?.PASSWORD);
-      } else {
-        setCurrentStep(steps[currentIndex + 1]);
-      }
+      setCurrentStep(steps[currentIndex + 1]);
     }
   };
 
   const handleSubmit = async () => {
     console.log(formData);
-    if (!(await validateStep())) return;
     try {
       setIsLoading(true);
-      const response = await userService.register(formData as RegistrationData);
+      const registrationData = {
+        ...formData,
+        password: formData.password, // collected in password step
+        password_confirmation: formData.password_confirmation,
+      };
+      const response = await userService.register(
+        registrationData as RegistrationData
+      );
+      console.log('data->',response.message);
       if (response.status) {
         toast({
           title: "Success",
-          description: "Registration completed successfully!",
+          description: response.message||"Registration completed successfully!",
         });
         onOpenChange(false);
       } else {
@@ -191,11 +296,12 @@ export function RegistrationForm({
           description: response.message,
         });
       }
-    } catch (error) {
+    } catch (error:any) {
+      console.log(error?.response.data.message);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "An error occurred during registration. Please try again.",
+        description: error?.response?.data?.message || "An error occurred during registration. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -218,8 +324,7 @@ export function RegistrationForm({
         );
       case FormSteps?.DOCUMENTS:
         return (
-          <DocumentUpload
-            type={customerType!}
+          <DocumentNumber
             data={formData}
             onChange={(data: Partial<RegistrationData>) =>
               setFormData((prev) => ({ ...prev, ...data }))
@@ -235,15 +340,25 @@ export function RegistrationForm({
       //       }
       //     />
       //   ) : null;
-      // case "agreement":
-      //   return (
-      //     <Agreement
-      //       data={formData}
-      //       onChange={(data: Partial<RegistrationData>) =>
-      //         setFormData((prev) => ({ ...prev, ...data }))
-      //       }
-      //     />
-      //   );
+      case FormSteps.AGREEMENT:
+        return (
+          <Agreement
+            data={formData}
+            onChange={(data: Partial<RegistrationData>) =>
+              setFormData((prev) => ({ ...prev, ...data }))
+            }
+          />
+        );
+      case FormSteps.PASSWORD:
+        return (
+          <PasswordForm
+            data={formData}
+            onChange={(data: Partial<RegistrationData>) =>
+              setFormData((prev) => ({ ...prev, ...data }))
+            }
+          />
+        );
+
       default:
         return null;
     }
@@ -263,9 +378,10 @@ export function RegistrationForm({
           Back
         </Button>
         <div className="text-sm text-gray-500">
-          Step {getCurrentStepIndex()} of {getTotalSteps(customerType!)}
+          Step {getCurrentStepIndex()} of{" "}
+          {customerType ? getTotalSteps(customerType) : 0}
         </div>
-        {currentStep !== FormSteps.AGREEMENT ? (
+        {currentStep !== FormSteps.PASSWORD ? (
           <Button onClick={handleNext} disabled={isLoading}>
             {isLoading ? "Loading..." : "Continue"}
           </Button>

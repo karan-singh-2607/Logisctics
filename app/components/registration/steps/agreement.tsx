@@ -24,8 +24,8 @@ export function Agreement({ data, onChange }: AgreementProps) {
           <Checkbox
             id="terms"
             checked={!!data.terms}
-            onCheckedChange={(checked) => onChange({ terms: checked })}
-          />
+            onCheckedChange={(checked) => onChange({ terms: checked === true })}
+            />
           <Label htmlFor="terms" className="text-sm leading-none pt-0.5">
             I agree to the Terms of Service and Privacy Policy
           </Label>
@@ -35,8 +35,8 @@ export function Agreement({ data, onChange }: AgreementProps) {
           <Checkbox
             id="marketing"
             checked={!!data.marketing}
-            onCheckedChange={(checked) => onChange({ marketing: checked })}
-          />
+            onCheckedChange={(checked) => onChange({ marketing: checked === true })}
+            />
           <Label htmlFor="marketing" className="text-sm leading-none pt-0.5">
             I agree to receive marketing communications
           </Label>
@@ -46,8 +46,8 @@ export function Agreement({ data, onChange }: AgreementProps) {
           <Checkbox
             id="dataProcessing"
             checked={!!data.dataProcessing}
-            onCheckedChange={(checked) => onChange({ dataProcessing: checked })}
-          />
+            onCheckedChange={(checked) => onChange({ dataProcessing: checked === true })}
+            />
           <Label htmlFor="dataProcessing" className="text-sm leading-none pt-0.5">
             I consent to the processing of my personal data as described in the Privacy Policy
           </Label>

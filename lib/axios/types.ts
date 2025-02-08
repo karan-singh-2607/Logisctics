@@ -96,6 +96,9 @@ export interface RegistrationValidateData {
 }
 
 export interface RegistrationData extends RegistrationValidateData {
+  terms?: boolean
+  marketing?: boolean
+  dataProcessing?: boolean
   password: string
   password_confirmation: string
 }
