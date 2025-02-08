@@ -108,3 +108,29 @@ export interface RegistrationResponse {
   message: string
   data?: any
 }
+
+export interface LoginRequest {
+  email: string
+  password: string
+}
+
+export interface User {
+  unique_id: string
+  full_name: string
+  email: string
+  mobile: string
+  image: string | null
+}
+
+export interface LoginResponse {
+  status: boolean
+  message: string
+  token?: string
+  user?: User
+}
+
+export interface AuthState {
+  user: User | null
+  token: string | null
+  isAuthenticated: boolean
+}

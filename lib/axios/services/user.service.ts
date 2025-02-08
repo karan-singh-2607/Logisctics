@@ -16,6 +16,8 @@ import {
   RegistrationValidateData,
   RegistrationResponse,
   RegistrationData,
+  LoginRequest,
+  LoginResponse,
 } from "../types";
 
 export const userService = {
@@ -92,19 +94,6 @@ export const userService = {
       CACHE_CONFIG.TTL.MEDIUM // Cache for 30 minutes
     )
   },
-
-  login: async (email: string, password: string) => {
-    try {
-      const response = await axiosInstance.post<any, ApiResponse<LoginData>>(
-        API_ENDPOINTS.USER.LOGIN,
-        { email, password }
-      );
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-
   // Example of another cached endpoint
   getUserProfile: async (userId: string) => {
     const cacheKey = `${API_ENDPOINTS.USER.PROFILE}-${userId}`;
@@ -137,5 +126,16 @@ export const userService = {
   register: async (data: RegistrationData): Promise<RegistrationResponse> => {
     const response = await axiosInstance.post<any, RegistrationResponse>(API_ENDPOINTS.USER.REGISTRATION, data)
     return response
+  },
+  login: async (data: LoginRequest): Promise<LoginResponse> => {
+    try {
+      const response = await axiosInstance.post<any, LoginResponse>(API_ENDPOINTS.USER.LOGIN, data)
+      return response
+    } catch (error: any) {
+      return {
+        status: false,
+        message: error.response?.data?.message || "An error occurred during login",
+      }
+    }
   },
 };
